@@ -63,7 +63,7 @@ export class CaptureTracker {
       captured,
       angleSpan,
       durationMs,
-      inTerritory: false,
+      inTerritory: true,
       mode: angleCapture ? 'angle' : (loopCapture ? 'loop' : null),
       capturedPath: captured ? this.pathPoints : null
     };
