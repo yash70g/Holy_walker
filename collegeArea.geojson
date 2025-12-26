@@ -38,6 +38,43 @@
           ]
         ],
         "type": "Polygon"
+      },
+      "id": 0
+    },
+    {
+      "type": "Feature",
+      "properties": {"icon": "ChristmasTree",
+        "size": 1.0},
+      "geometry": {
+        "coordinates": [
+          77.37148809489895,
+          28.629832986935327
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {"icon": "CandyCnae",
+        "size": 0.8},
+      "geometry": {
+        "coordinates": [
+          77.37405209345957,
+          28.62958032034973
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {"icon": "Sleigh",
+        "size": 1.2},
+      "geometry": {
+        "coordinates": [
+          77.37130970155079,
+          28.630470612111893
+        ],
+        "type": "Point"
       }
     }
   ]
