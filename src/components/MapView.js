@@ -19,8 +19,8 @@ const MapView = React.forwardRef(({
     const centerLng = (bounds[0][0] + bounds[2][0]) / 2;
 
     const RED_PNG = "https://i.ibb.co/6cTgQpjf/Santa-Sprite.png";
-    const GREEN_PNG = "https://i.ibb.co/68X66fT/Elf-Sprite.png"; // Replace with actual
-    const BLUE_PNG = "https://i.ibb.co/m0vH5dK/Snowman-Sprite.png"; // Replace with actual
+    const GREEN_PNG = "https://i.ibb.co/0p2DnHtH/Elf-Sprite.png";
+    const BLUE_PNG = "https://i.ibb.co/FkzRdQNS/Snwmn-Sprite.png";
 
     return `
       <!DOCTYPE html>
