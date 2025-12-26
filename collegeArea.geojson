@@ -55,7 +55,7 @@
     },
     {
       "type": "Feature",
-      "properties": {"icon": "CandyCnae",
+      "properties": {"icon": "CandyCane",
         "size": 0.8},
       "geometry": {
         "coordinates": [
