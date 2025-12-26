@@ -31,34 +31,47 @@ const MapView = React.forwardRef(({
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
         <style>
           * { margin: 0; padding: 0; }
-          body { overflow: hidden; background: #001a33; }
+          body { overflow: hidden; background: #1a1a1a; } /* Dark background for loading */
           #map { position: absolute; top: 0; bottom: 0; width: 100%; height: 100%; z-index: 1; }
 
-          /* SNOW ANIMATION */
+          /* SNOW ANIMATION - High Visibility */
           .snow-container {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
-            z-index: 1000;
+            z-index: 9999; /* Forces snow to the very top */
             overflow: hidden;
           }
           .snowflake {
             position: absolute;
-            top: -10px;
+            top: -20px;
             color: white;
+            text-shadow: 0 0 5px rgba(0,0,0,0.8); /* Adds shadow so it's visible on white maps */
             user-select: none;
             animation-name: fall;
             animation-timing-function: linear;
             animation-iteration-count: infinite;
           }
           @keyframes fall {
-            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(360deg); opacity: 0.3; }
+            0% { transform: translateY(-5vh) translateX(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(105vh) translateX(20px) rotate(360deg); opacity: 0; }
           }
         </style>
       </head>
       <body>
         <div class="snow-container" id="snow"></div>
+
+        <svg style="width:0; height:0; position:absolute;">
+          <defs>
+            <pattern id="snowPattern" patternUnits="userSpaceOnUse" width="30" height="30">
+              <circle cx="10" cy="10" r="1.5" fill="rgba(255,255,255,0.4)" />
+              <circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.3)" />
+            </pattern>
+          </defs>
+        </svg>
+
         <div id="map"></div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
         <script>
@@ -68,30 +81,34 @@ const MapView = React.forwardRef(({
           let regionLayers = {};
 
           const teamConfigs = {
-            RED: { icon: L.icon({ iconUrl: '${RED_PNG}', iconSize: [50, 50], iconAnchor: [25, 25] }), trailColor: '#ff4444' },
-            GREEN: { icon: L.icon({ iconUrl: '${GREEN_PNG}', iconSize: [50, 50], iconAnchor: [25, 25] }), trailColor: '#44ff44' },
-            BLUE: { icon: L.icon({ iconUrl: '${BLUE_PNG}', iconSize: [50, 50], iconAnchor: [25, 25] }), trailColor: '#4444ff' }
+            RED: { icon: L.icon({ iconUrl: '${RED_PNG}', iconSize: [55, 55], iconAnchor: [27, 27] }), trailColor: '#ff4444' },
+            GREEN: { icon: L.icon({ iconUrl: '${GREEN_PNG}', iconSize: [55, 55], iconAnchor: [27, 27] }), trailColor: '#2ECC71' },
+            BLUE: { icon: L.icon({ iconUrl: '${BLUE_PNG}', iconSize: [60, 60], iconAnchor: [30, 30] }), trailColor: '#3498DB' }
           };
 
           function createSnow() {
             const container = document.getElementById('snow');
-            for (let i = 0; i < 30; i++) {
+            for (let i = 0; i < 40; i++) {
               const flake = document.createElement('div');
               flake.className = 'snowflake';
               flake.innerHTML = '❄';
               flake.style.left = Math.random() * 100 + 'vw';
-              flake.style.animationDuration = (Math.random() * 3 + 2) + 's';
-              flake.style.opacity = Math.random();
-              flake.style.fontSize = (Math.random() * 10 + 10) + 'px';
-              flake.style.animationDelay = Math.random() * 5 + 's';
+              flake.style.animationDuration = (Math.random() * 5 + 3) + 's';
+              flake.style.fontSize = (Math.random() * 15 + 10) + 'px';
+              flake.style.animationDelay = Math.random() * 10 + 's';
               container.appendChild(flake);
             }
           }
 
           function initializeMap() {
             if (mapInstance) return;
-            mapInstance = L.map('map').setView([${centerLat}, ${centerLng}], 16);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
+            mapInstance = L.map('map', { zoomControl: false }).setView([${centerLat}, ${centerLng}], 16);
+            
+            // DARK THEME MAP (Makes snow visible!)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+              attribution: '&copy; CartoDB'
+            }).addTo(mapInstance);
+
             createSnow();
             window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'MAP_READY' }));
           }
@@ -113,15 +130,21 @@ const MapView = React.forwardRef(({
             if (data.userPath && data.userPath.length > 0) {
               if (userPolyline) mapInstance.removeLayer(userPolyline);
               userPolyline = L.polyline(data.userPath.map(p => [p.latitude, p.longitude]), 
-                { color: config.trailColor, weight: 4, opacity: 0.8, dashArray: '10, 10' }).addTo(mapInstance);
+                { color: config.trailColor, weight: 5, opacity: 0.9, dashArray: '5, 10' }).addTo(mapInstance);
             }
 
             data.regions.forEach(region => {
               const rColor = (teamConfigs[region.ownerTeam] || teamConfigs.RED).trailColor;
+              const style = { 
+                color: rColor, 
+                weight: 3, 
+                fillColor: 'url(#snowPattern)', 
+                fillOpacity: 0.7 
+              };
               if (regionLayers[region.id]) {
-                regionLayers[region.id].setStyle({ color: rColor, fillColor: rColor });
+                regionLayers[region.id].setStyle(style);
               } else {
-                regionLayers[region.id] = L.geoJSON(region.polygon, { style: { color: rColor, weight: 2, fillOpacity: 0.3 } }).addTo(mapInstance);
+                regionLayers[region.id] = L.geoJSON(region.polygon, { style }).addTo(mapInstance);
               }
             });
           };
@@ -141,12 +164,17 @@ const MapView = React.forwardRef(({
 
   return (
     <View style={styles.container}>
-      <WebView ref={webViewRef} originWhitelist={['*']} source={{ html: generateLeafletHTML() }}
+      <WebView 
+        ref={webViewRef} 
+        originWhitelist={['*']} 
+        source={{ html: generateLeafletHTML() }}
         onMessage={(e) => JSON.parse(e.nativeEvent.data).type === 'MAP_READY' && setMapReady(true)}
-        style={{ flex: 1 }} javaScriptEnabled={true} />
+        style={{ flex: 1 }} 
+        javaScriptEnabled={true} 
+      />
     </View>
   );
 });
 
-const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: '#fff' } });
+const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: '#1a1a1a' } });
 export default MapView;
