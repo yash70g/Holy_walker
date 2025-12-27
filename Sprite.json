@@ -1,0 +1,79 @@
+{
+  "frames": {
+    "Sleigh.png": {
+      "filename": "Sleigh.png",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 979,
+        "h": 500
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 979,
+        "h": 500
+      },
+      "sourceSize": {
+        "w": 979,
+        "h": 500
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "ChristmasTree.png": {
+      "filename": "ChristmasTree.png",
+      "frame": {
+        "x": 1257,
+        "y": 0,
+        "w": 433,
+        "h": 576
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 433,
+        "h": 576
+      },
+      "sourceSize": {
+        "w": 433,
+        "h": 576
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "CandyCane.png": {
+      "filename": "CandyCane.png",
+      "frame": {
+        "x": 0,
+        "y": 780,
+        "w": 1255,
+        "h": 778
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1255,
+        "h": 778
+      },
+      "sourceSize": {
+        "w": 1255,
+        "h": 778
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "version": 8,
+
+  "sprite": "sprite-sheet",
+
+  "sources": {
+    "Markers": {
+      "type": "geojson",
+      "data": "collegeArea.geojson"
+    }
+  },
+
+  "layers": [
+    {
+      "id": "1st layer",
+      "type": "symbol",
+      "source": "Markers",
+
+      "layout": {
+        "icon-image": ["get", "icon"],
+        "icon-size": ["get", "size"],
+        "icon-allow-overlap": true,
+        "icon-ignore-placement": true
+      },
+
+      "paint": {
+        "icon-opacity": 1.0
+      }
+    }
+  ]
+}
