@@ -73,7 +73,11 @@ const MapGame = ({ userTeam, userId, onSwitchTeam }) => {
 
         {/* CUSTOM SWITCH TEAM BUTTON */}
         <TouchableOpacity style={styles.switchTeamBtn} onPress={onSwitchTeam}>
-          <Image source={{ uri: UI_ASSETS.SWITCH_BTN }} style={styles.switchBtnImg} resizeMode="contain" />
+          <Image 
+            source={{ uri: 'https://i.ibb.co/Z6HNGK9F/Switch-Team.png' }} // Your new custom button
+            style={{ width: 120, height: 45 }} 
+            resizeMode="contain" 
+          />
         </TouchableOpacity>
 
         <HUD regions={regions} userTeam={userTeam} />
