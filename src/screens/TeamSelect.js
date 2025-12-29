@@ -31,13 +31,11 @@ const TeamSelect = ({ onTeamSelected }) => {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Your Custom Button URLs
-  const teamButtons = {
-    RED: "https://i.ibb.co/Tq8WMcQ0/Red-Team.png",
-    BLUE: "https://i.ibb.co/d0zDhxkD/Blue-Team.png",
-    GREEN: "https://i.ibb.co/bMM01d27/Green-Team.png",
-  };
-
+  const teams = [
+    { name: 'RED', color: '#ff4444', label: '🔴 Santa' },
+    { name: 'BLUE', color: '#4444ff', label: '🔵 Snowman' },
+    { name: 'GREEN', color: '#44ff44', label: '🟢 Elf' }
+  ];
   const handleTeamSelect = async (teamName) => {
     setSelectedTeam(teamName);
     setLoading(true);
