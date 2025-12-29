@@ -8,6 +8,8 @@ const MapView = React.forwardRef(({
   userPath, 
   regions = [],
   userTeam = "RED",
+  giftBoxes = [],
+  christmasTrees = [],
   onReady 
 }, ref) => {
   const webViewRef = useRef(null);
@@ -21,6 +23,8 @@ const MapView = React.forwardRef(({
     const RED_PNG = "https://i.ibb.co/6cTgQpjf/Santa-Sprite.png";
     const GREEN_PNG = "https://i.ibb.co/0p2DnHtH/Elf-Sprite.png";
     const BLUE_PNG = "https://i.ibb.co/FkzRdQNS/Snwmn-Sprite.png";
+    const GIFTBOX_PNG = "https://cdn.discordapp.com/emojis/797537734238797845.webp?size=128";
+    const CHRISTMAS_TREE_PNG = "https://media.discordapp.net/attachments/1453705547089051692/1455135266959524035/image-1.png.png?ex=69539fd2&is=69524e52&hm=78d6c1e9e717f56024a5e712acfdf5721fa372542ce477b00ecd84468a554170&=&format=webp&quality=lossless&width=80&height=80";
 
     return `
       <!DOCTYPE html>
@@ -31,30 +35,34 @@ const MapView = React.forwardRef(({
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
         <style>
           * { margin: 0; padding: 0; }
-          body { overflow: hidden; background: #1a1a1a; }
+          body { overflow: hidden; background: #0a0e27; }
           #map { position: absolute; top: 0; bottom: 0; width: 100%; height: 100%; z-index: 1; }
 
+          /* Dark theme for map tiles */
+          .leaflet-container {
+            background-color: #0a0e27;
+          }
+
+          /* SNOW ANIMATION */
           .snow-container {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
-            z-index: 9999;
+            z-index: 1000;
             overflow: hidden;
           }
           .snowflake {
             position: absolute;
-            top: -20px;
+            top: -10px;
             color: white;
-            text-shadow: 0 0 5px rgba(0,0,0,0.8);
             user-select: none;
             animation-name: fall;
             animation-timing-function: linear;
             animation-iteration-count: infinite;
           }
           @keyframes fall {
-            0% { transform: translateY(-5vh) translateX(0) rotate(0deg); opacity: 0; }
-            10% { opacity: 1; }
-            100% { transform: translateY(105vh) translateX(25px) rotate(360deg); opacity: 0; }
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0.3; }
           }
         </style>
       </head>
@@ -67,27 +75,26 @@ const MapView = React.forwardRef(({
           let userMarker = null;
           let userPolyline = null;
           let regionLayers = {};
-          let emojiPatterns = {};
+          let giftBoxMarkers = [];
+          let christmasTreeMarkers = [];
 
           const teamConfigs = {
-            RED: { emoji: '🎁', color: '#ff4444', icon: '${RED_PNG}' },
-            GREEN: { emoji: '🎄', color: '#2ECC71', icon: '${GREEN_PNG}' },
-            BLUE: { emoji: '☃️', color: '#3498DB', icon: '${BLUE_PNG}' }
+            RED: { icon: L.icon({ iconUrl: '${RED_PNG}', iconSize: [50, 50], iconAnchor: [25, 25] }), trailColor: '#ff4444' },
+            GREEN: { icon: L.icon({ iconUrl: '${GREEN_PNG}', iconSize: [50, 50], iconAnchor: [25, 25] }), trailColor: '#44ff44' },
+            BLUE: { icon: L.icon({ iconUrl: '${BLUE_PNG}', iconSize: [50, 50], iconAnchor: [25, 25] }), trailColor: '#4444ff' }
           };
 
-          // Function to create a repeating emoji texture using Canvas
-          function createEmojiPattern(emoji) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 40;
-            canvas.height = 40;
-            const ctx = canvas.getContext('2d');
-            ctx.font = '20px serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.globalAlpha = 0.3; // Make them subtle
-            ctx.fillText(emoji, 20, 20);
-            return ctx.createPattern(canvas, 'repeat');
-          }
+          const giftBoxIcon = L.icon({
+            iconUrl: '${GIFTBOX_PNG}',
+            iconSize: [35, 35],
+            iconAnchor: [17, 17]
+          });
+
+          const christmasTreeIcon = L.icon({
+            iconUrl: '${CHRISTMAS_TREE_PNG}',
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
+          });
 
           function createSnow() {
             const container = document.getElementById('snow');
@@ -96,77 +103,95 @@ const MapView = React.forwardRef(({
               flake.className = 'snowflake';
               flake.innerHTML = '❄';
               flake.style.left = Math.random() * 100 + 'vw';
-              flake.style.animationDuration = (Math.random() * 5 + 3) + 's';
-              flake.style.fontSize = (Math.random() * 15 + 10) + 'px';
-              flake.style.animationDelay = Math.random() * 10 + 's';
+              flake.style.animationDuration = (Math.random() * 3 + 2) + 's';
+              flake.style.opacity = Math.random();
+              flake.style.fontSize = (Math.random() * 10 + 10) + 'px';
+              flake.style.animationDelay = Math.random() * 5 + 's';
               container.appendChild(flake);
             }
           }
 
+          function addGiftBoxes() {
+            const giftBoxes = [
+              [28.62900000000000, 77.36850234567891],
+              [28.62850000000000, 77.37100567890123],
+              [28.63050000000000, 77.37300123456789],
+              [28.62920000000000, 77.37250234567890],
+              [28.63100000000000, 77.36950345678901]
+            ];
+            
+            giftBoxes.forEach((coords, idx) => {
+              const marker = L.marker(coords, { icon: giftBoxIcon }).addTo(mapInstance);
+              marker.bindPopup('🎁 Gift Box ' + (idx + 1));
+              giftBoxMarkers.push(marker);
+            });
+          }
+
           function initializeMap() {
             if (mapInstance) return;
-            mapInstance = L.map('map', { zoomControl: false }).setView([${centerLat}, ${centerLng}], 16);
+            mapInstance = L.map('map', { preferCanvas: true }).setView([${centerLat}, ${centerLng}], 16);
             
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(mapInstance);
-
-            // Pre-create emoji patterns
-            emojiPatterns.RED = createEmojiPattern(teamConfigs.RED.emoji);
-            emojiPatterns.GREEN = createEmojiPattern(teamConfigs.GREEN.emoji);
-            emojiPatterns.BLUE = createEmojiPattern(teamConfigs.BLUE.emoji);
-
+            // Use free dark map tiles (CartoDB Voyager)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+              attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+              maxZoom: 20
+            }).addTo(mapInstance);
+            
+            addGiftBoxes();
             createSnow();
             window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'MAP_READY' }));
           }
 
           window.handleMapUpdate = function(data) {
             if (!mapInstance) initializeMap();
-            
-            const team = data.userTeam || 'RED';
-            const config = teamConfigs[team];
+            const config = teamConfigs[data.userTeam] || teamConfigs.RED;
 
-            // Update Marker
-            const leafIcon = L.icon({ iconUrl: config.icon, iconSize: [55, 55], iconAnchor: [27, 27] });
             if (data.userLocation && data.userLocation.latitude) {
               const pos = [data.userLocation.latitude, data.userLocation.longitude];
               if (!userMarker) {
-                userMarker = L.marker(pos, { icon: leafIcon }).addTo(mapInstance);
+                userMarker = L.marker(pos, { icon: config.icon }).addTo(mapInstance);
               } else {
-                userMarker.setLatLng(pos).setIcon(leafIcon);
+                userMarker.setLatLng(pos).setIcon(config.icon);
               }
               mapInstance.panTo(pos);
             }
 
-            // Update Trail
             if (data.userPath && data.userPath.length > 0) {
               if (userPolyline) mapInstance.removeLayer(userPolyline);
               userPolyline = L.polyline(data.userPath.map(p => [p.latitude, p.longitude]), 
-                { color: config.color, weight: 5, opacity: 0.8, dashArray: '5, 10' }).addTo(mapInstance);
+                { color: config.trailColor, weight: 4, opacity: 0.8, dashArray: '10, 10' }).addTo(mapInstance);
             }
 
-            // Update Regions with Emoji Fill
             data.regions.forEach(region => {
-              const rTeam = region.ownerTeam || 'RED';
-              const rColor = teamConfigs[rTeam].color;
-              
-              const style = { 
-                color: rColor, 
-                weight: 2, 
-                fillColor: rColor, // Fallback color
-                fillOpacity: 0.4
-              };
-
+              const rColor = (teamConfigs[region.ownerTeam] || teamConfigs.RED).trailColor;
               if (regionLayers[region.id]) {
-                regionLayers[region.id].setStyle(style);
+                regionLayers[region.id].setStyle({ color: rColor, fillColor: rColor });
               } else {
-                const layer = L.geoJSON(region.polygon, { style }).addTo(mapInstance);
-                
-                // Hack to apply Canvas pattern to Leaflet Path
-                if (layer.getLayers()[0]._path) {
-                    layer.getLayers()[0]._path.setAttribute('fill', emojiPatterns[rTeam]);
-                }
-                regionLayers[region.id] = layer;
+                regionLayers[region.id] = L.geoJSON(region.polygon, { style: { color: rColor, weight: 2, fillOpacity: 0.3 } }).addTo(mapInstance);
               }
             });
+
+            // Update gift boxes
+            if (data.giftBoxes) {
+              giftBoxMarkers.forEach(marker => mapInstance.removeLayer(marker));
+              giftBoxMarkers = [];
+              data.giftBoxes.forEach(box => {
+                const marker = L.marker([box.lat, box.lng], { icon: giftBoxIcon }).addTo(mapInstance);
+                marker.bindPopup('🎁 Gift Box (' + box.rarity + ')');
+                giftBoxMarkers.push(marker);
+              });
+            }
+
+            // Update Christmas trees
+            if (data.christmasTrees) {
+              christmasTreeMarkers.forEach(marker => mapInstance.removeLayer(marker));
+              christmasTreeMarkers = [];
+              data.christmasTrees.forEach(tree => {
+                const marker = L.marker([tree.lat, tree.lng], { icon: christmasTreeIcon }).addTo(mapInstance);
+                marker.bindPopup('🎄 Christmas Tree');
+                christmasTreeMarkers.push(marker);
+              });
+            }
           };
 
           window.addEventListener('load', initializeMap);
@@ -178,23 +203,18 @@ const MapView = React.forwardRef(({
 
   useEffect(() => {
     if (webViewRef.current && mapReady) {
-      webViewRef.current.injectJavaScript(`window.handleMapUpdate(${JSON.stringify({ userLocation, userPath, regions, userTeam })}); true;`);
+      webViewRef.current.injectJavaScript(`window.handleMapUpdate(${JSON.stringify({ userLocation, userPath, regions, userTeam, giftBoxes, christmasTrees })}); true;`);
     }
-  }, [userLocation, userPath, regions, userTeam, mapReady]);
+  }, [userLocation, userPath, regions, userTeam, giftBoxes, christmasTrees, mapReady]);
 
   return (
     <View style={styles.container}>
-      <WebView 
-        ref={webViewRef} 
-        originWhitelist={['*']} 
-        source={{ html: generateLeafletHTML() }}
+      <WebView ref={webViewRef} originWhitelist={['*']} source={{ html: generateLeafletHTML() }}
         onMessage={(e) => JSON.parse(e.nativeEvent.data).type === 'MAP_READY' && setMapReady(true)}
-        style={{ flex: 1 }} 
-        javaScriptEnabled={true} 
-      />
+        style={{ flex: 1 }} javaScriptEnabled={true} />
     </View>
   );
 });
 
-const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: '#1a1a1a' } });
+const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: '#fff' } });
 export default MapView;
