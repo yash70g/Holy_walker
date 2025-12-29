@@ -1,9 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Alert, Image, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth, db } from '../firebase/config';
 import { signInAnonymously } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+
+const { width, height } = Dimensions.get('window');
+
+// Simple Snowflakes for the background
+const Snowflakes = () => {
+  return [...Array(20)].map((_, i) => (
+    <Text
+      key={i}
+      style={[
+        styles.snowflake,
+        {
+          left: Math.random() * width,
+          top: Math.random() * height,
+          opacity: Math.random(),
+          fontSize: Math.random() * 10 + 10,
+        },
+      ]}
+    >
+      ❄
+    </Text>
+  ));
+};
 
 const TeamSelect = ({ onTeamSelected }) => {
   const [selectedTeam, setSelectedTeam] = useState(null);
@@ -36,43 +58,47 @@ const TeamSelect = ({ onTeamSelected }) => {
 
     } catch (error) {
       console.error('Error selecting team:', error);
-      Alert.alert('Error', 'Failed to select team. Please try again.');
+      Alert.alert('Error', 'Failed to join team.');
       setLoading(false);
       setSelectedTeam(null);
     }
   };
+
   return (
     <View style={styles.container}>
+      <Snowflakes />
+      
       <View style={styles.content}>
-        <Text style={styles.title}>🏁 Territory Walk Game</Text>
-        <Text style={styles.subtitle}>Select Your Team</Text>
+        <Text style={styles.title}>NORTH POLE WARS</Text>
+        <Text style={styles.subtitle}>Select Your Allegiance</Text>
 
         <View style={styles.teamGrid}>
-          {teams.map((team) => (
+          {Object.keys(teamButtons).map((team) => (
             <Pressable
-              key={team.name}
-              style={[
+              key={team}
+              style={({ pressed }) => [
                 styles.teamButton,
-                { 
-                  backgroundColor: team.color,
-                  opacity: selectedTeam === team.name ? 1 : 0.7
-                }
+                { opacity: (loading && selectedTeam !== team) ? 0.5 : (pressed ? 0.8 : 1) }
               ]}
-              onPress={() => handleTeamSelect(team.name)}
-              disabled={loading && selectedTeam !== team.name}
+              onPress={() => handleTeamSelect(team)}
+              disabled={loading}
             >
-              <Text style={styles.teamButtonLabel}>{team.label}</Text>
-              {selectedTeam === team.name && !loading && (
-                <Text style={styles.checkmark}>✓</Text>
-              )}
-              {selectedTeam === team.name && loading && (
-                <Text style={styles.loading}>...</Text>
+              <Image 
+                source={{ uri: teamButtons[team] }} 
+                style={styles.buttonImage}
+                resizeMode="contain"
+              />
+              {loading && selectedTeam === team && (
+                <View style={styles.loadingOverlay}>
+                  <Text style={styles.loadingText}>JOINING...</Text>
+                </View>
               )}
             </Pressable>
           ))}
         </View>
+
         <Text style={styles.instructions}>
-          Join a team and start walking to control the territory!
+          Claim territory for your team by walking in the real world.
         </Text>
       </View>
     </View>
@@ -82,62 +108,74 @@ const TeamSelect = ({ onTeamSelected }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#050a0f', // Very dark blue/black
     justifyContent: 'center',
     alignItems: 'center',
   },
   content: {
+    width: '100%',
     alignItems: 'center',
     paddingHorizontal: 20,
+    zIndex: 10, // Ensure content is above snow
+  },
+  snowflake: {
+    position: 'absolute',
+    color: '#fff',
+    zIndex: 1,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 34,
+    fontWeight: '900',
     color: '#fff',
-    marginBottom: 12,
-    textAlign: 'center',
+    letterSpacing: 2,
+    marginBottom: 5,
+    textShadowColor: 'rgba(255, 255, 255, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 15,
   },
   subtitle: {
-    fontSize: 20,
-    color: '#aaa',
+    fontSize: 16,
+    color: '#88aaff',
     marginBottom: 40,
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
   teamGrid: {
-    gap: 16,
-    marginBottom: 40,
+    width: '100%',
+    gap: 20,
+    alignItems: 'center',
   },
   teamButton: {
-    paddingVertical: 20,
-    paddingHorizontal: 30,
-    borderRadius: 12,
+    width: width * 0.9, // 90% of screen width
+    height: (width * 0.9) * (170 / 940), // Maintains the ~940x170 aspect ratio
+    justifyContent: 'center',
     alignItems: 'center',
-    minWidth: 200,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
-  teamButtonLabel: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+  buttonImage: {
+    width: '100%',
+    height: '100%',
   },
-  checkmark: {
-    fontSize: 24,
-    color: '#fff',
+  loadingOverlay: {
+    position: 'absolute',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  loading: {
-    fontSize: 16,
+  loadingText: {
     color: '#fff',
     fontWeight: 'bold',
+    letterSpacing: 2,
   },
   instructions: {
-    fontSize: 14,
-    color: '#888',
+    fontSize: 13,
+    color: '#556677',
     textAlign: 'center',
-    maxWidth: 250,
-    lineHeight: 20,
+    marginTop: 40,
+    lineHeight: 18,
+    maxWidth: '80%',
   },
 });
 
