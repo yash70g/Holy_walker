@@ -8,7 +8,8 @@ const { width } = Dimensions.get('window');
 const HUD = ({ 
   regions = [],
   captureProgress, 
-  userTeam 
+  userTeam,
+  sessionCoins = 0,
 }) => {
   // Your Custom Button URLs
   const TEAM_BUTTONS = {
@@ -70,6 +71,7 @@ const HUD = ({
         <View style={styles.progressBar}>
           <View style={[styles.progressFill, { width: `${captureProgress * 100}%` }]} />
         </View>
+        <Text style={styles.subtleText}>Pocket coins: {sessionCoins}</Text>
       </View>
 
       {/* YOUR TEAM */}
@@ -156,6 +158,12 @@ const styles = StyleSheet.create({
     shadowColor: '#fff',
     shadowRadius: 5,
     shadowOpacity: 0.8,
+  },
+  subtleText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 11,
+    marginTop: 6,
+    fontWeight: '600',
   },
   verdictBox: {
     position: 'absolute',
