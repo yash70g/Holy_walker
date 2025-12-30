@@ -1,5 +1,6 @@
 # Territory Walk Game
-Check [Gameplay]([https://nodejs.org/](https://drive.google.com/file/d/1CkYFzyi_MPxi9FkP8N48zAr7m6IYzTZS/view?usp=sharing))
+[Video Gameplay](https://drive.google.com/file/d/1CkYFzyi_MPxi9FkP8N48zAr7m6IYzTZS/view?usp=sharing)
+
 A location-based multiplayer territory capture game built with React Native and Expo. Compete with other teams to claim territories, collect gifts, and dominate the map in this Christmas-themed mobile game.
 
 
