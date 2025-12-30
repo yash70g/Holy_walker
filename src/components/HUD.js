@@ -8,7 +8,8 @@ const { width } = Dimensions.get('window');
 const HUD = ({ 
   regions = [],
   captureProgress, 
-  userTeam 
+  userTeam,
+  sessionCoins = 0,
 }) => {
   // Your Custom Button URLs
   const TEAM_BUTTONS = {
@@ -53,34 +54,30 @@ const HUD = ({
   return (
     <View style={styles.container} pointerEvents="none">
       {/* CLAIMED REGIONS */}
-      <View style={styles.infoBox}>
+      <View style={styles.card}>
         <Text style={styles.label}>Claimed Regions</Text>
-        <View style={styles.badgeWrapper}>
-          <Image source={{ uri: TEAM_BUTTONS[userTeam] }} style={styles.badgeImage} resizeMode="stretch" />
-          <View style={styles.textOverlay}>
-            <Text style={styles.ownerText}>{userTeam}: {userRegionCount}</Text>
+        {['RED', 'BLUE', 'GREEN'].map(team => (
+          <View key={team} style={styles.claimedRow}>
+            <Text style={[styles.claimedTeam, { color: teamColors[team] }]}>{team}</Text>
+            <Text style={styles.claimedValue}>{regionsByTeam[team] || 0}</Text>
           </View>
-        </View>
+        ))}
         <Text style={styles.points}>Total: {regions.length}</Text>
       </View>
 
       {/* CAPTURE PROGRESS */}
-      <View style={styles.progressBox}>
+      <View style={styles.card}>
         <Text style={styles.label}>Capture Progress</Text>
         <View style={styles.progressBar}>
           <View style={[styles.progressFill, { width: `${captureProgress * 100}%` }]} />
         </View>
+        <Text style={styles.subtleText}>Pocket coins: {sessionCoins}</Text>
       </View>
 
       {/* YOUR TEAM */}
-      <View style={styles.teamBox}>
+      <View style={styles.card}>
         <Text style={styles.label}>Your Team</Text>
-        <View style={styles.badgeWrapper}>
-          <Image source={{ uri: TEAM_BUTTONS[userTeam] }} style={styles.badgeImage} resizeMode="stretch" />
-          <View style={styles.textOverlay}>
-            <Text style={styles.teamText}>{userTeam}</Text>
-          </View>
-        </View>
+        <Image source={{ uri: TEAM_BUTTONS[userTeam] }} style={styles.teamBadge} resizeMode="contain" />
       </View>
 
       {/* AREA CONTROL BOX */}
@@ -100,39 +97,52 @@ const HUD = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 35,
-    left: 10,
-    right: 10,
+    top: 24,
+    left: 12,
+    right: 12,
+    gap: 8,
     zIndex: 100,
   },
-  infoBox: { marginBottom: 10 },
+  card: {
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 10,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+  },
   label: {
     color: '#fff',
-    fontSize: 10,
-    fontWeight: '900',
-    marginBottom: 4,
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 6,
     textTransform: 'uppercase',
-    textShadowColor: '#000',
-    textShadowRadius: 3,
+    letterSpacing: 0.5,
   },
-  badgeWrapper: {
+  teamBadge: {
     width: width * 0.65,
     height: 40,
-    justifyContent: 'center',
   },
-  badgeImage: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 6,
+  claimedRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: width * 0.65,
+    paddingVertical: 4,
   },
-  textOverlay: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  claimedTeam: {
+    fontWeight: '900',
+    fontSize: 12,
   },
-  ownerText: { color: '#fff', fontSize: 14, fontWeight: '900' },
-  teamText: { color: '#fff', fontSize: 14, fontWeight: '900' },
-  points: { color: '#4caf50', fontSize: 14, fontWeight: 'bold', marginTop: 4 },
+  claimedValue: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  points: { color: '#fff', fontSize: 12, fontWeight: '700', marginTop: 4 },
   
-  progressBox: { marginBottom: 10 },
   progressBar: {
     width: width * 0.65,
     height: 12,
@@ -149,19 +159,22 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     shadowOpacity: 0.8,
   },
-
-  teamBox: { marginBottom: 10 },
-  
+  subtleText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 11,
+    marginTop: 6,
+    fontWeight: '600',
+  },
   verdictBox: {
     position: 'absolute',
-    top: 130, // Positioned below the other boxes
+    top: 130,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0,0,0,0.8)',
     padding: 10,
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#444',
-    minWidth: 110,
+    borderColor: 'rgba(255,255,255,0.08)',
+    minWidth: 120,
   },
   verdictRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   verdictTeam: { fontWeight: '900', fontSize: 11 },

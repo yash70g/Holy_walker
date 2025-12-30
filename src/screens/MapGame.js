@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Alert, SafeAreaView, TouchableOpacity, Text, Image, Animated } from 'react-native';
+import { View, StyleSheet, Alert, SafeAreaView, TouchableOpacity, Text, Image, Animated, Dimensions } from 'react-native';
 import { db } from '../firebase/config';
 import { onSnapshot, collection, updateDoc, doc, increment } from 'firebase/firestore';
 import MapView from '../components/MapView';
@@ -10,6 +10,8 @@ import { createCapturedRegion } from '../utils/regionManager';
 import { GiftBoxManager, GIFT_BOX_SPAWN_INTERVAL } from '../utils/giftBoxManager';
 import { ChristmasTreeManager, CHRISTMAS_TREE_SPAWN_INTERVAL } from '../utils/christmasTreeManager';
 
+const { width } = Dimensions.get('window');
+
 const MapGame = ({ userTeam, userId, onSwitchTeam }) => {
   const [userLocation, setUserLocation] = useState(null);
   const [userPath, setUserPath] = useState([]);
@@ -19,6 +21,8 @@ const MapGame = ({ userTeam, userId, onSwitchTeam }) => {
   const [christmasTrees, setChristmasTrees] = useState([]);
   const [collectedGift, setCollectedGift] = useState(null);
   const [territoryPoints, setTerritoryPoints] = useState(0);
+  const [sessionCoins, setSessionCoins] = useState(0);
+  const [showWelcome, setShowWelcome] = useState(false);
   
   const captureTrackerRef = useRef(new CaptureTracker());
   const giftBoxManagerRef = useRef(new GiftBoxManager());
@@ -91,11 +95,30 @@ const MapGame = ({ userTeam, userId, onSwitchTeam }) => {
     return () => unsubscribe();
   }, [userId]);
 
+  const hasSpawnedWelcomeGift = useRef(false);
+
   useEffect(() => {
     const init = async () => {
       const sub = await startLocationTracking((loc) => {
         setUserLocation({ latitude: loc.latitude, longitude: loc.longitude });
         updateDoc(doc(db, 'users', userId), { lastLocation: { lat: loc.latitude, lng: loc.longitude }, lastUpdate: new Date().toISOString() });
+        
+        if (!hasSpawnedWelcomeGift.current && loc.latitude && loc.longitude) {
+          const welcomeGift = {
+            id: 'welcome-gift',
+            lat: loc.latitude,
+            lng: loc.longitude,
+            rarity: 'EPIC',
+            reward: 50,
+            spawnTime: Date.now(),
+            expiryTime: Date.now() + 300000 
+          };
+          giftBoxManagerRef.current.activeGiftBoxes.push(welcomeGift);
+          setGiftBoxes(giftBoxManagerRef.current.getActiveGiftBoxes());
+          hasSpawnedWelcomeGift.current = true;
+          setShowWelcome(true);
+          setTimeout(() => setShowWelcome(false), 5000);
+        }
         
         const result = captureTrackerRef.current.addPoint(loc.latitude, loc.longitude, loc.timestamp);
         if (result.inTerritory) setUserPath(prev => [...prev, { latitude: loc.latitude, longitude: loc.longitude }].slice(-50));
@@ -129,10 +152,8 @@ const MapGame = ({ userTeam, userId, onSwitchTeam }) => {
     // Update gift boxes display
     setGiftBoxes(giftBoxManagerRef.current.getActiveGiftBoxes());
 
-    // Award territory points
-    await updateDoc(doc(db, 'users', userId), {
-      territoryPoints: increment(giftBox.reward)
-    });
+    // Add to session coins (not persisted until banked)
+    setSessionCoins((prev) => prev + giftBox.reward);
 
     // Show collection animation
     setCollectedGift(giftBox);
@@ -155,14 +176,17 @@ const MapGame = ({ userTeam, userId, onSwitchTeam }) => {
     // Update trees display
     setChristmasTrees(christmasTreeManagerRef.current.getActiveTrees());
 
-    // Award bonus territory points for trees (more valuable than gift boxes)
-    const treeBonus = 30;
-    await updateDoc(doc(db, 'users', userId), {
-      territoryPoints: increment(treeBonus)
-    });
+    // Bank session coins when at a tree
+    const coinsToBank = sessionCoins;
+    if (coinsToBank > 0) {
+      await updateDoc(doc(db, 'users', userId), {
+        territoryPoints: increment(coinsToBank)
+      });
+      setSessionCoins(0);
+    }
 
-    // Show collection animation
-    setCollectedGift({ ...tree, reward: treeBonus, rarity: 'TREE' });
+    // Show collection animation (banked coins or a small cheer)
+    setCollectedGift({ ...tree, reward: coinsToBank, rarity: 'BANKED' });
     giftAnimValue.setValue(0);
     Animated.sequence([
       Animated.timing(giftAnimValue, {
@@ -190,26 +214,39 @@ const MapGame = ({ userTeam, userId, onSwitchTeam }) => {
           christmasTrees={christmasTrees}
         />
         
-        <TouchableOpacity style={styles.switchTeamBtn} onPress={onSwitchTeam}>
-          <View style={[
-            styles.teamBanner,
-            { backgroundColor: userTeam === 'BLUE' ? 'rgba(100, 150, 255, 0.95)' : userTeam === 'GREEN' ? 'rgba(70, 200, 100, 0.95)' : 'rgba(220, 50, 50, 0.95)' }
-          ]}>
-            <Image 
-              source={{ uri: userTeam === 'BLUE' ? 'https://i.ibb.co/FkzRdQNS/Snwmn-Sprite.png' : userTeam === 'GREEN' ? 'https://i.ibb.co/0p2DnHtH/Elf-Sprite.png' : 'https://i.ibb.co/6cTgQpjf/Santa-Sprite.png' }} 
-              style={styles.teamIcon} 
-              resizeMode="contain" 
-            />
-            <Text style={styles.teamLabel}>{userTeam}</Text>
-          </View>
+        <TouchableOpacity
+          style={styles.switchTeamBtn}
+          onPress={onSwitchTeam}
+          activeOpacity={0.85}
+          pointerEvents="auto"
+        >
+          <Image
+            source={{ uri: 'https://images-ext-1.discordapp.net/external/dsGkiiARBaNVOidkuM-8PgrB-evk7ihVWLK6GsNTH-0/https/i.ibb.co/Z6HNGK9F/Switch-Team.png?format=webp&quality=lossless&width=800&height=146' }}
+            style={styles.switchBanner}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
 
-        <HUD regions={regions} userTeam={userTeam} territoryPoints={territoryPoints} />
+        <HUD 
+          regions={regions} 
+          userTeam={userTeam} 
+          territoryPoints={territoryPoints}
+          sessionCoins={sessionCoins}
+        />
 
         {showVictory && (
           <View style={styles.victoryOverlay}>
             <Text style={styles.victoryText}>REGION CAPTURED!</Text>
             <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3893/3893113.png' }} style={{ width: 200, height: 200 }} />
+          </View>
+        )}
+
+        {showWelcome && (
+          <View style={styles.victoryOverlay}>
+            <Text style={styles.victoryText}>🎁 WELCOME GIFT!</Text>
+            <Text style={styles.welcomeSubtext}>Collect gift boxes for coins!</Text>
+            <Text style={styles.welcomeSubtext}>🎄 Bank them at Christmas trees</Text>
+            <Text style={styles.welcomeSubtext}>or lose them if you close the app!</Text>
           </View>
         )}
 
@@ -234,7 +271,11 @@ const MapGame = ({ userTeam, userId, onSwitchTeam }) => {
               source={{ uri: 'https://i.ibb.co/wdV9Zj9/gift-box.png' }} 
               style={styles.giftBoxImage} 
             />
-            <Text style={styles.giftCollectedText}>+{collectedGift.reward} Territory!</Text>
+            <Text style={styles.giftCollectedText}>
+              {collectedGift.rarity === 'BANKED' 
+                ? `Banked +${collectedGift.reward || 0} coins`
+                : `+${collectedGift.reward} coins`}
+            </Text>
             <Text style={styles.giftRarityText}>{collectedGift.rarity}</Text>
           </Animated.View>
         )}
@@ -249,39 +290,28 @@ const styles = StyleSheet.create({
   switchTeamBtn: { 
     position: 'absolute', 
     bottom: 30, 
-    left: 20, 
-    zIndex: 100 
-  },
-  teamBanner: {
-    flexDirection: 'row',
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: '#fff',
+    zIndex: 200,
+    elevation: 12,
+    pointerEvents: 'auto'
+  },
+  switchBanner: {
+    width: width * 0.7,
+    height: (width * 0.7) * (117 / 640),
+    borderRadius: 12,
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5
-  },
-  teamIcon: { 
-    width: 40, 
-    height: 40,
-    marginRight: 8
-  },
-  teamLabel: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textShadowColor: '#000',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 6
   },
   btnImg: { width: 60, height: 60 },
   victoryOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
   victoryText: { color: 'gold', fontSize: 32, fontWeight: 'bold', marginBottom: 20 },
+  welcomeSubtext: { color: '#fff', fontSize: 16, fontWeight: '600', marginTop: 8, textAlign: 'center', paddingHorizontal: 20 },
   giftCollectedOverlay: {
     position: 'absolute',
     top: '35%',
