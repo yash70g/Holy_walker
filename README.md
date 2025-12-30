@@ -2,7 +2,6 @@
 
 A location-based multiplayer territory capture game built with React Native and Expo. Compete with other teams to claim territories, collect gifts, and dominate the map in this Christmas-themed mobile game.
 
-![Game Banner](https://via.placeholder.com/800x200/2c3e50/ffffff?text=Territory+Walk+Game)
 
 ## Overview
 
