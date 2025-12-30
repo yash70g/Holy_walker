@@ -36,6 +36,13 @@ const TeamSelect = ({ onTeamSelected }) => {
     { name: 'BLUE', color: '#4444ff', label: '🔵 Snowman' },
     { name: 'GREEN', color: '#44ff44', label: '🟢 Elf' }
   ];
+
+  const teamButtons = {
+    RED: 'https://i.ibb.co/6cTgQpjf/Santa-Sprite.png',
+    BLUE: 'https://i.ibb.co/FkzRdQNS/Snwmn-Sprite.png',
+    GREEN: 'https://i.ibb.co/0p2DnHtH/Elf-Sprite.png'
+  };
+
   const handleTeamSelect = async (teamName) => {
     setSelectedTeam(teamName);
     setLoading(true);

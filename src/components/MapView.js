@@ -129,7 +129,8 @@ const MapView = React.forwardRef(({
 
           function initializeMap() {
             if (mapInstance) return;
-            mapInstance = L.map('map', { preferCanvas: true }).setView([${centerLat}, ${centerLng}], 16);
+            // Disable default zoom controls to remove magnifying UI
+            mapInstance = L.map('map', { preferCanvas: true, zoomControl: false }).setView([${centerLat}, ${centerLng}], 16);
             
             // Use free dark map tiles (CartoDB Voyager)
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
