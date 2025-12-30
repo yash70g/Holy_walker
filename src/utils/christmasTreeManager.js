@@ -2,7 +2,7 @@ import * as turf from '@turf/turf';
 import { TERRITORY_POLYGON, isPointInTerritory, getDistanceBetweenPoints } from './geo';
 
 export const CHRISTMAS_TREE_SPAWN_INTERVAL = 45000; 
-export const CHRISTMAS_TREE_LIFETIME = 180000; // 3 minutes
+export const CHRISTMAS_TREE_LIFETIME = 50000; 
 export const CHRISTMAS_TREE_COLLECTION_RADIUS = 20;
 export const MAX_ACTIVE_TREES = 8;
 export const MIN_TREE_DISTANCE = 60; 

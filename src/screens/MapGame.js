@@ -27,6 +27,7 @@ const MapGame = ({ userTeam, userId, onSwitchTeam }) => {
   const captureTrackerRef = useRef(new CaptureTracker());
   const giftBoxManagerRef = useRef(new GiftBoxManager());
   const christmasTreeManagerRef = useRef(new ChristmasTreeManager());
+  const sessionCoinsRef = useRef(0);
   const giftAnimValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -153,7 +154,8 @@ const MapGame = ({ userTeam, userId, onSwitchTeam }) => {
     setGiftBoxes(giftBoxManagerRef.current.getActiveGiftBoxes());
 
     // Add to session coins (not persisted until banked)
-    setSessionCoins((prev) => prev + giftBox.reward);
+    sessionCoinsRef.current += giftBox.reward;
+    setSessionCoins(sessionCoinsRef.current);
 
     // Show collection animation
     setCollectedGift(giftBox);
@@ -177,11 +179,12 @@ const MapGame = ({ userTeam, userId, onSwitchTeam }) => {
     setChristmasTrees(christmasTreeManagerRef.current.getActiveTrees());
 
     // Bank session coins when at a tree
-    const coinsToBank = sessionCoins;
+    const coinsToBank = sessionCoinsRef.current;
     if (coinsToBank > 0) {
       await updateDoc(doc(db, 'users', userId), {
         territoryPoints: increment(coinsToBank)
       });
+      sessionCoinsRef.current = 0;
       setSessionCoins(0);
     }
 
